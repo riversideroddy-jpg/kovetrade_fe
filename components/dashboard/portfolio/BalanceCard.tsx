@@ -187,13 +187,13 @@ export default function BalanceCard({
                 <span
                   className={`inline-flex items-center gap-1.5 text-[9px] font-semibold px-2 py-0.5 rounded-full border w-fit ${
                     isVerified
-                      ? "bg-emerald-500/15 border-emerald-400/30 text-emerald-300"
+                      ? "bg-emerald-500/15 border-emerald-400/30 text-blue-500"
                       : "bg-yellow-500/15 border-yellow-400/30 text-yellow-300"
                   }`}
                 >
                   <span
                     className={`w-1.5 h-1.5 rounded-full ${
-                      isVerified ? "bg-emerald-400" : "bg-yellow-400"
+                      isVerified ? "bg-blue-600" : "bg-yellow-400"
                     }`}
                   />
                   {isVerified ? "Verified" : "Pending Verification"}

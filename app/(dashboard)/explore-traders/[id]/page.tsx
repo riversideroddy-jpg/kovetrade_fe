@@ -8,7 +8,6 @@ import {
   TrendingDown,
   X,
   Users,
-  Calendar,
   DollarSign,
   UserCheck,
   Shield,
@@ -64,7 +63,7 @@ interface TraderDetail {
   frequently_traded: string[];
   bio: string;
   followers: number;
-  trading_days: string;
+  profit_share: string;
   trend_direction: string;
   tags: string[];
   category: string;
@@ -577,13 +576,13 @@ export default function TraderProfilePage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-orange-500" />
+                  <DollarSign className="w-4 h-4 text-[#5edc1f]" />
                   <div>
                     <div className="text-sm font-bold text-gray-900 dark:text-white">
-                      {trader.trading_days}
+                      {parseFloat(trader.profit_share).toFixed(0)}%
                     </div>
                     <div className="text-[11px] text-gray-500 dark:text-gray-400">
-                      Trading days
+                      Profit Share
                     </div>
                   </div>
                 </div>

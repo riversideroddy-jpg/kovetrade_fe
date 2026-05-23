@@ -45,7 +45,7 @@ const columns = [
 const regulators = [
   { code: "CySEC", label: "Cyprus", license: "#109/10" },
   { code: "FCA", label: "United Kingdom", license: "FRN 583263" },
-  { code: "SEC", label: "United States", license: "CRD 40824 " },
+  { code: "SEC", label: "United States", license: "CRD 329900" },
   { code: "FSRA", label: "Abu Dhabi", license: "FSP 220073" },
 ];
 
@@ -189,7 +189,7 @@ const Footer = () => {
             4046, Limassol, Cyprus. KoveTrade (UK) Ltd, authorised and regulated
             by the Financial Conduct Authority (FCA) under FRN 583263. Registered
             Office: 24th floor, One Canada Square, Canary Wharf, London E14 5AB.
-            KoveTrade (USA) Ltd, authorised and regulated by the SEC; CRD 40824.
+            KoveTrade (USA) Ltd, authorised and regulated by the SEC; CRD 329900.
             KoveTrade (ME) Limited, licensed and regulated by the Abu Dhabi Global
             Market (ADGM) Financial Services Regulatory Authority (FSRA) under
             Financial Services Permission Number 220073.

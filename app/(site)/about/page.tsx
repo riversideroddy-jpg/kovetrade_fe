@@ -452,7 +452,7 @@ export default function AboutPage() {
               flag="🇺🇸" region="United States"
               entity="KoveTrade (USA) Ltd."
               regulator="Securities and Exchange Commission (SEC)"
-              license="CRD 298461"
+              license="CRD 329900"
               delay={0.19}
             />
             <RegCard

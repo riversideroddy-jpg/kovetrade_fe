@@ -142,7 +142,7 @@ const SECTIONS = [
 const ENTITIES = [
   { region: "Europe",        entity: "KoveTrade (Europe) Ltd.",   reg: "CySEC",  license: "License #109/10"          },
   { region: "United Kingdom",entity: "KoveTrade (UK) Ltd.",       reg: "FCA",    license: "FRN 583263"               },
-  { region: "United States", entity: "KoveTrade (USA) Ltd.",      reg: "SEC",    license: "CRD 298461"               },
+  { region: "United States", entity: "KoveTrade (USA) Ltd.",      reg: "SEC",    license: "CRD 329900"               },
   { region: "Middle East",   entity: "KoveTrade (ME) Limited",    reg: "FSRA",   license: "Permission No. 220073"    },
 ];
 

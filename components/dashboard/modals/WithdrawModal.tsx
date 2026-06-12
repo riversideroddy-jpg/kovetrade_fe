@@ -223,11 +223,11 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                       </button>
 
                       {isDropdownOpen && (
-                        <div className="absolute z-10 w-full mt-1.5 bg-white dark:bg-white/[0.04] border border-gray-200 dark:border-white/10 rounded-lg shadow-lg overflow-hidden">
-                          <div className="px-3 py-2 bg-[#5edc1f] text-white text-xs font-semibold">Select method</div>
+                        <div className="absolute z-10 w-full mt-1.5 bg-white dark:bg-[#1a2742] border border-gray-200 dark:border-white/10 rounded-lg shadow-lg overflow-hidden">
+                          <div className="px-4 py-2.5 bg-[#5edc1f] text-white text-xs font-semibold">Select method</div>
                           <div className="max-h-48 overflow-y-auto">
                             {methods.length === 0 ? (
-                              <div className="px-3 py-3 text-xs text-gray-500 dark:text-gray-400">
+                              <div className="px-4 py-4 text-xs text-gray-500 dark:text-gray-400">
                                 No payment methods available. Add one in settings.
                               </div>
                             ) : (
@@ -235,7 +235,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                                 <button
                                   key={method.id}
                                   onClick={() => handleMethodSelect(method.method_type)}
-                                  className="w-full px-3 py-2.5 text-left text-sm text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+                                  className="w-full px-4 py-3.5 text-left text-sm text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
                                 >
                                   {method.display_name}
                                 </button>

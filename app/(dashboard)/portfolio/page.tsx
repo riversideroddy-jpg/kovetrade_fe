@@ -24,6 +24,7 @@ interface DashboardData {
   totalProfits: number;
   isVerified: boolean;
   firstName: string;
+  target: number;
 }
 
 export default function PortfolioPage() {
@@ -35,6 +36,7 @@ export default function PortfolioPage() {
     totalProfits: 0,
     isVerified: false,
     firstName: "",
+    target: 50000,
   });
 
   // Modal states
@@ -83,6 +85,7 @@ export default function PortfolioPage() {
           totalProfits: parseFloat(user.profit) || 0,
           isVerified: user.is_verified || false,
           firstName: user.first_name || "",
+          target: parseFloat(user.target) || 50000,
         }));
       }
 
@@ -153,6 +156,34 @@ export default function PortfolioPage() {
         </div>
 
         <div className="flex flex-col gap-4">
+          {/* Portfolio Growth target progress bar */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="rounded-2xl px-4 pt-3 pb-3 bg-white/80 dark:bg-white/3 backdrop-blur-xl border border-gray-200/50 dark:border-white/10 shadow-sm"
+          >
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-[12px] font-semibold text-gray-500 dark:text-gray-400">Portfolio Growth</span>
+              <span className="text-[12px] font-bold text-[#5edc1f]">
+                ${dashboardData.target.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} target
+              </span>
+            </div>
+            <div className="h-1.5 rounded-full overflow-hidden bg-gray-100 dark:bg-white/10">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{
+                  width: `${dashboardData.target > 0 ? Math.min((dashboardData.totalDeposits / dashboardData.target) * 100, 100) : 0}%`,
+                }}
+                transition={{ duration: 1.3, ease: [0.22, 1, 0.36, 1], delay: 0.3 }}
+                className="h-full rounded-full bg-[#5edc1f]"
+              />
+            </div>
+            <div className="mt-1.5 text-[10px] text-gray-400 dark:text-gray-500">
+              ${dashboardData.totalDeposits.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} deposited of ${dashboardData.target.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
+          </motion.div>
+
           <LiveTradingCard />
           <AssetAllocationCard
             balance={dashboardData.balance}

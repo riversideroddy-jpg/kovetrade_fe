@@ -38,5 +38,7 @@ export interface UserProfile {
   account_id: string;
   balance: string;
   formatted_balance: string;
+  profit: string;
+  formatted_profit: string;
   is_verified: boolean;
 }

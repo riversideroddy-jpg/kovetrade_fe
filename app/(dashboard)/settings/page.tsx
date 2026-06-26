@@ -25,6 +25,8 @@ interface EditModalData {
     | "btc"
     | "eth"
     | "usdt"
+    | "usdc_base"
+    | "usdc_sol"
     | "disable2fa"
     | null;
 }
@@ -56,6 +58,14 @@ interface UserSettings {
       address: string;
       network: string;
       method_type: string;
+      has_method: boolean;
+    };
+    usdc_base: {
+      address: string;
+      has_method: boolean;
+    };
+    usdc_sol: {
+      address: string;
       has_method: boolean;
     };
   };
@@ -250,6 +260,18 @@ export default function SettingsPage() {
             userSettings.payment_methods.usdt.method_type || "USDT_TRC20",
         });
         break;
+      case "usdc_base":
+        setFormData({
+          ...formData,
+          cryptoAddress: userSettings.payment_methods.usdc_base.address,
+        });
+        break;
+      case "usdc_sol":
+        setFormData({
+          ...formData,
+          cryptoAddress: userSettings.payment_methods.usdc_sol.address,
+        });
+        break;
       case "password":
         setFormData({
           ...formData,
@@ -334,6 +356,20 @@ export default function SettingsPage() {
             address: formData.cryptoAddress,
           };
           break;
+        case "usdc_base":
+          endpoint = "/settings/payment-method/";
+          body = {
+            method_type: "USDC_BASE",
+            address: formData.cryptoAddress,
+          };
+          break;
+        case "usdc_sol":
+          endpoint = "/settings/payment-method/";
+          body = {
+            method_type: "USDC_SOL",
+            address: formData.cryptoAddress,
+          };
+          break;
         default:
           return;
       }
@@ -342,7 +378,9 @@ export default function SettingsPage() {
         editModal.type === "password" ||
         editModal.type === "btc" ||
         editModal.type === "eth" ||
-        editModal.type === "usdt"
+        editModal.type === "usdt" ||
+        editModal.type === "usdc_base" ||
+        editModal.type === "usdc_sol"
           ? "POST"
           : "PATCH";
 
@@ -834,6 +872,56 @@ export default function SettingsPage() {
                   </button>
                 </div>
               </div>
+
+              {/* USDC Base Address */}
+              <div className="bg-white dark:bg-white/[0.04] p-5 rounded-lg border border-gray-200 dark:border-white/10">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                      USDC Address (Base)
+                    </div>
+                    <div className="text-sm font-semibold text-gray-900 dark:text-white break-all">
+                      {userSettings.payment_methods.usdc_base.address ||
+                        "No address added"}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">Base Network</div>
+                  </div>
+                  <button
+                    onClick={() => openEditModal("usdc_base")}
+                    className="px-4 py-2 text-sm bg-[#5edc1f] hover:bg-[#4cc015] text-white rounded-lg transition-colors whitespace-nowrap self-start sm:self-auto"
+                  >
+                    {userSettings.payment_methods.usdc_base.has_method
+                      ? "Edit"
+                      : "Add"}{" "}
+                    USDC Base Address
+                  </button>
+                </div>
+              </div>
+
+              {/* USDC SOL Address */}
+              <div className="bg-white dark:bg-white/[0.04] p-5 rounded-lg border border-gray-200 dark:border-white/10">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                      USDC Address (Solana)
+                    </div>
+                    <div className="text-sm font-semibold text-gray-900 dark:text-white break-all">
+                      {userSettings.payment_methods.usdc_sol.address ||
+                        "No address added"}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">Solana Network</div>
+                  </div>
+                  <button
+                    onClick={() => openEditModal("usdc_sol")}
+                    className="px-4 py-2 text-sm bg-[#5edc1f] hover:bg-[#4cc015] text-white rounded-lg transition-colors whitespace-nowrap self-start sm:self-auto"
+                  >
+                    {userSettings.payment_methods.usdc_sol.has_method
+                      ? "Edit"
+                      : "Add"}{" "}
+                    USDC SOL Address
+                  </button>
+                </div>
+              </div>
             </div>
           </motion.div>
         )}
@@ -1293,6 +1381,104 @@ export default function SettingsPage() {
                         className="w-full px-3 py-2.5 text-sm bg-gray-100 dark:bg-[#0f1a2e] text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5edc1f] border border-gray-200 dark:border-white/10"
                       />
                     </div>
+                  </div>
+                  <div className="flex gap-3 mt-5">
+                    <button
+                      onClick={handleUpdate}
+                      disabled={updating}
+                      className="flex-1 py-2.5 text-sm bg-[#5edc1f] hover:bg-[#4cc015] text-white rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {updating ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Updating...
+                        </span>
+                      ) : (
+                        "Update"
+                      )}
+                    </button>
+                    <button
+                      onClick={closeModal}
+                      disabled={updating}
+                      className="flex-1 py-2.5 text-sm bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {/* USDC Base Address Modal */}
+              {editModal.type === "usdc_base" && (
+                <>
+                  <h3 className="text-base font-bold text-gray-900 dark:text-white mb-4">
+                    {userSettings?.payment_methods.usdc_base.has_method
+                      ? "Edit"
+                      : "Add"}{" "}
+                    USDC Address (Base)
+                  </h3>
+                  <div>
+                    <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1.5">
+                      USDC Address (Base Network):
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.cryptoAddress}
+                      onChange={(e) =>
+                        setFormData({ ...formData, cryptoAddress: e.target.value })
+                      }
+                      placeholder="Enter wallet address"
+                      className="w-full px-3 py-2.5 text-sm bg-gray-100 dark:bg-[#0f1a2e] text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5edc1f] border border-gray-200 dark:border-white/10"
+                    />
+                  </div>
+                  <div className="flex gap-3 mt-5">
+                    <button
+                      onClick={handleUpdate}
+                      disabled={updating}
+                      className="flex-1 py-2.5 text-sm bg-[#5edc1f] hover:bg-[#4cc015] text-white rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {updating ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Updating...
+                        </span>
+                      ) : (
+                        "Update"
+                      )}
+                    </button>
+                    <button
+                      onClick={closeModal}
+                      disabled={updating}
+                      className="flex-1 py-2.5 text-sm bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {/* USDC SOL Address Modal */}
+              {editModal.type === "usdc_sol" && (
+                <>
+                  <h3 className="text-base font-bold text-gray-900 dark:text-white mb-4">
+                    {userSettings?.payment_methods.usdc_sol.has_method
+                      ? "Edit"
+                      : "Add"}{" "}
+                    USDC Address (Solana)
+                  </h3>
+                  <div>
+                    <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1.5">
+                      USDC Address (Solana Network):
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.cryptoAddress}
+                      onChange={(e) =>
+                        setFormData({ ...formData, cryptoAddress: e.target.value })
+                      }
+                      placeholder="Enter wallet address"
+                      className="w-full px-3 py-2.5 text-sm bg-gray-100 dark:bg-[#0f1a2e] text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5edc1f] border border-gray-200 dark:border-white/10"
+                    />
                   </div>
                   <div className="flex gap-3 mt-5">
                     <button

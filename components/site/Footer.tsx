@@ -19,6 +19,7 @@ const columns = [
       { label: "Affiliate Program", href: "/affiliate" },
       { label: "Leader Guide", href: "/leader-guide" },
       { label: "User Guide", href: "/user-guide" },
+      { label: "FAQ", href: "/faq" },
     ],
   },
   {

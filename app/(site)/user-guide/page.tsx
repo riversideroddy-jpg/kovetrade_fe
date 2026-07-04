@@ -5,6 +5,7 @@ import { motion, useInView, useScroll, useTransform, AnimatePresence } from "fra
 import Link from "next/link";
 import Navbar from "@/components/site/Navbar";
 import Footer from "@/components/site/Footer";
+import FAQMajor from "@/components/site/FAQMajor";
 
 const E = [0.16, 1, 0.3, 1] as const;
 
@@ -729,6 +730,30 @@ export default function UserGuidePage() {
           ))}
         </div>
       </GuideSection>
+
+      {/* ── FAQ ──────────────────────────────────────────────────── */}
+      <section className="border-t border-gray-100 dark:border-white/5">
+        <div className="max-w-6xl mx-auto px-4">
+          <Reveal>
+            <div className="pt-12 pb-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#5edc1f]/35 bg-[#5edc1f]/10 mb-4">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#5edc1f] animate-pulse" />
+                <span className="text-xs text-[#5edc1f] font-medium tracking-wide uppercase">FAQ</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                Frequently Asked Questions
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Browse answers by category or visit the{" "}
+                <Link href="/faq" className="text-[#5edc1f] hover:text-lime-400 font-medium transition-colors">
+                  full FAQ page
+                </Link>.
+              </p>
+            </div>
+          </Reveal>
+        </div>
+        <FAQMajor showHeader={false} />
+      </section>
 
       {/* ── CTA ──────────────────────────────────────────────────── */}
       <section className="py-16 px-4 border-t border-gray-100 dark:border-white/5">

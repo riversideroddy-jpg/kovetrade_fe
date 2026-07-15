@@ -445,7 +445,10 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                             {getNetworkName(wallet.currency)}
                           </p>
                           <p className="text-xs text-gray-500 mt-0.5">
-                            Rate: ${wallet.amount} per unit
+                            Rate: ${parseFloat(wallet.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })} per unit
+                            {wallet.rate_is_live && (
+                              <span className="ml-1.5 text-[9px] font-semibold uppercase tracking-wide text-lime-500 bg-lime-500/10 px-1.5 py-0.5 rounded-full">Live</span>
+                            )}
                           </p>
                         </div>
                       </div>
@@ -817,8 +820,11 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                     <p className="text-[#5edc1f] dark:text-lime-400 font-semibold">
                       {selectedWallet.currency_display}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Rate: ${selectedWallet.amount} per unit
+                    <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                      Rate: ${parseFloat(selectedWallet.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })} per unit
+                      {selectedWallet.rate_is_live && (
+                        <span className="text-[9px] font-semibold uppercase tracking-wide text-lime-500 bg-lime-500/10 px-1.5 py-0.5 rounded-full">Live</span>
+                      )}
                     </p>
                   </div>
                 </div>

@@ -3,6 +3,7 @@ export interface AdminWallet {
   currency: string;
   currency_display: string;
   amount: string;
+  rate_is_live: boolean;
   wallet_address: string;
   qr_code_url: string | null;
   is_active: boolean;

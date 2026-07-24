@@ -941,7 +941,7 @@ export default function SettingsPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white dark:bg-white/[0.04] rounded-xl max-w-md w-full p-6 border border-gray-200 dark:border-white/10"
+              className="bg-white dark:bg-[#0f1a2e] rounded-xl max-w-md w-full p-6 border border-gray-200 dark:border-white/10 shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close button */}

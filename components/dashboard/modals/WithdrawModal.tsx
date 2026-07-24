@@ -328,7 +328,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                       className="w-full px-4 py-3 bg-gray-100 dark:bg-white/4 border border-gray-300 dark:border-white/10 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-[#5edc1f] transition-all"
                     />
                     {profile && amount && parseFloat(amount) > parseFloat(withdrawSource === "profit" ? profile.profit : profile.balance) && (
-                      <p className="mt-1.5 text-xs text-red-400">
+                      <p className="mt-1.5 text-xs text-red-500 dark:text-red-400">
                         Amount exceeds your {withdrawSource === "profit" ? "profit" : "balance"} of{" "}
                         {withdrawSource === "profit" ? profile.formatted_profit : profile.formatted_balance}
                       </p>

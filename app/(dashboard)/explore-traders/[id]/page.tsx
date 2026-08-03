@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ArrowLeft,
   Info,
@@ -14,15 +14,6 @@ import {
   Clock,
 } from "lucide-react";
 import { toast } from "sonner";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  ResponsiveContainer,
-  Tooltip,
-  CartesianGrid,
-} from "recharts";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import Image from "next/image";
@@ -103,72 +94,6 @@ interface SimilarTrader {
   category: string;
 }
 
-// Generate synthetic chart data based on trend direction
-function generateChartData(
-  direction: string,
-  period: string
-): Array<{ label: string; value: number }> {
-  const periods: Record<string, { count: number; labels: string[] }> = {
-    "1D": {
-      count: 24,
-      labels: Array.from({ length: 24 }, (_, i) => `${i}:00`),
-    },
-    "1W": {
-      count: 7,
-      labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-    },
-    "1M": {
-      count: 30,
-      labels: Array.from({ length: 30 }, (_, i) => `${i + 1}`),
-    },
-    "3M": {
-      count: 12,
-      labels: [
-        "W1", "W2", "W3", "W4", "W5", "W6",
-        "W7", "W8", "W9", "W10", "W11", "W12",
-      ],
-    },
-    "1Y": {
-      count: 12,
-      labels: [
-        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-      ],
-    },
-  };
-
-  const config = periods[period] || periods["1M"];
-  const isUp = direction === "upward";
-  const data: Array<{ label: string; value: number }> = [];
-
-  let seed = period.charCodeAt(0) * 100;
-  const pseudoRandom = () => {
-    seed = (seed * 9301 + 49297) % 233280;
-    return seed / 233280;
-  };
-
-  const baseValue = 10000;
-  let current = baseValue;
-
-  for (let i = 0; i < config.count; i++) {
-    const progress = i / (config.count - 1);
-    const noise = (pseudoRandom() - 0.5) * 800;
-
-    if (isUp) {
-      current = baseValue + progress * 5000 + noise;
-    } else {
-      current = baseValue + 5000 - progress * 5000 + noise;
-    }
-
-    data.push({
-      label: config.labels[i],
-      value: Math.max(current, 1000),
-    });
-  }
-
-  return data;
-}
-
 // Color palette for portfolio breakdown - green shades like screenshot
 const portfolioColors = [
   "#365314", // dark green
@@ -188,7 +113,6 @@ export default function TraderProfilePage() {
   const [activeTab, setActiveTab] = useState<
     "overview" | "portfolio" | "history" | "copiers"
   >("overview");
-  const [chartPeriod, setChartPeriod] = useState("1Y");
   const [trader, setTrader] = useState<TraderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -361,26 +285,6 @@ export default function TraderProfilePage() {
       `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&size=128`
     );
   };
-
-  const chartData = useMemo(() => {
-    if (!trader) return [];
-    return generateChartData(trader.trend_direction || "upward", chartPeriod);
-  }, [trader, chartPeriod]);
-
-  const chartColor =
-    trader?.trend_direction === "downward" ? "#ef4444" : "#84cc16";
-
-  const earningsValue = useMemo(() => {
-    if (!chartData.length) return 0;
-    return chartData[chartData.length - 1].value;
-  }, [chartData]);
-
-  const earningsChange = useMemo(() => {
-    if (chartData.length < 2) return 0;
-    const first = chartData[0].value;
-    const last = chartData[chartData.length - 1].value;
-    return ((last - first) / first) * 100;
-  }, [chartData]);
 
   const getRiskLabel = (risk: number) => {
     if (risk <= 3) return "Conservative";
@@ -649,127 +553,8 @@ export default function TraderProfilePage() {
         {activeTab === "overview" && (
           <>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Earnings Chart */}
-              <div className="lg:col-span-2 bg-white dark:bg-white/[0.04] border border-gray-100 dark:border-white/5 rounded-2xl p-5 sm:p-6">
-                <div className="mb-1">
-                  <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                    Earnings
-                  </h2>
-                  <p className="text-xs text-gray-400 dark:text-gray-500">
-                    {new Date().getFullYear()}-{String(new Date().getMonth() + 1).padStart(2, "0")}-{new Date().getFullYear()}
-                  </p>
-                </div>
-
-                {/* Period Selector */}
-                <div className="flex gap-1 mb-4">
-                  {["1D", "1W", "1M", "3M", "1Y"].map((p) => (
-                    <button
-                      key={p}
-                      onClick={() => setChartPeriod(p)}
-                      className={`px-4 py-2 text-xs font-medium border transition-all ${
-                        chartPeriod === p
-                          ? "border-gray-400 dark:border-gray-500 bg-gray-100 dark:bg-[#0f1d32] text-gray-900 dark:text-white"
-                          : "border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-white/20"
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Value */}
-                <div className="flex items-baseline gap-3 mb-6">
-                  <span className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-                    ${earningsValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </span>
-                  <span
-                    className={`text-sm font-semibold ${
-                      earningsChange >= 0
-                        ? "text-lime-500"
-                        : "text-red-500"
-                    }`}
-                  >
-                    {earningsChange >= 0 ? "+" : ""}
-                    {earningsChange.toFixed(1)}%
-                  </span>
-                </div>
-
-                {/* Chart */}
-                <div className="h-56 sm:h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData}>
-                      <defs>
-                        <linearGradient
-                          id="chartGradient"
-                          x1="0"
-                          y1="0"
-                          x2="0"
-                          y2="1"
-                        >
-                          <stop
-                            offset="0%"
-                            stopColor={chartColor}
-                            stopOpacity={0.3}
-                          />
-                          <stop
-                            offset="100%"
-                            stopColor={chartColor}
-                            stopOpacity={0}
-                          />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        stroke={isLight ? "#f1f5f9" : "#1e293b"}
-                        vertical={false}
-                      />
-                      <XAxis
-                        dataKey="label"
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{
-                          fontSize: 11,
-                          fill: isLight ? "#94a3b8" : "#64748b",
-                        }}
-                        interval="preserveStartEnd"
-                      />
-                      <YAxis
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{
-                          fontSize: 11,
-                          fill: isLight ? "#94a3b8" : "#64748b",
-                        }}
-                        tickFormatter={(v) => `$${(v / 1000).toFixed(0)}K`}
-                        width={55}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: isLight ? "#ffffff" : "#1e293b",
-                          border: `1px solid ${isLight ? "#e2e8f0" : "#334155"}`,
-                          borderRadius: 12,
-                          color: isLight ? "#0f1724" : "#fff",
-                          fontSize: 13,
-                        }}
-                        formatter={(value) => [
-                          `$${Number(value).toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
-                          "Value",
-                        ]}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="value"
-                        stroke={chartColor}
-                        strokeWidth={2}
-                        fill="url(#chartGradient)"
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
               {/* Profile Data Sidebar */}
-              <div className="bg-white dark:bg-white/[0.04] border border-gray-100 dark:border-white/5 rounded-2xl p-5 sm:p-6">
+              <div className="lg:col-span-3 bg-white dark:bg-white/[0.04] border border-gray-100 dark:border-white/5 rounded-2xl p-5 sm:p-6">
                 <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-6">
                   Profile data
                 </h2>

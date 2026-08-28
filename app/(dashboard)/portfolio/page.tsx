@@ -173,14 +173,14 @@ export default function PortfolioPage() {
               <motion.div
                 initial={{ width: 0 }}
                 animate={{
-                  width: `${dashboardData.target > 0 ? Math.min((dashboardData.totalDeposits / dashboardData.target) * 100, 100) : 0}%`,
+                  width: `${dashboardData.target > 0 ? Math.max(0, Math.min((dashboardData.totalProfits / dashboardData.target) * 100, 100)) : 0}%`,
                 }}
                 transition={{ duration: 1.3, ease: [0.22, 1, 0.36, 1], delay: 0.3 }}
                 className="h-full rounded-full bg-[#5edc1f]"
               />
             </div>
             <div className="mt-1.5 text-[10px] text-gray-400 dark:text-gray-500">
-              ${dashboardData.totalDeposits.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} deposited of ${dashboardData.target.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ${dashboardData.totalProfits.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} profit of ${dashboardData.target.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
           </motion.div>
 

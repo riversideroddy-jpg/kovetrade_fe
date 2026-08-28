@@ -25,6 +25,8 @@ export default function TransferPage() {
   const [profit, setProfit] = useState("0.00");
   const [canTransfer, setCanTransfer] = useState(false);
   const [currency, setCurrency] = useState("USD");
+  const [transferLimitEnabled, setTransferLimitEnabled] = useState(false);
+  const [transferLimit, setTransferLimit] = useState("500.00");
   const [direction, setDirection] = useState<Direction>("balance_to_profit");
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(true);
@@ -73,6 +75,8 @@ export default function TransferPage() {
         setProfit(data.profit);
         setCanTransfer(data.can_transfer);
         setCurrency(data.currency || "USD");
+        setTransferLimitEnabled(data.transfer_limit_enabled || false);
+        setTransferLimit(data.transfer_limit || "500.00");
       } else {
         console.error("Transfer info error:", res.status, data);
         toast.error(data?.detail || data?.error || "Failed to load transfer info");
@@ -103,6 +107,12 @@ export default function TransferPage() {
     }
     if (!amount || parseFloat(amount) <= 0) {
       toast.error("Please enter a valid amount");
+      return;
+    }
+    if (transferLimitEnabled && parseFloat(amount) > parseFloat(transferLimit)) {
+      toast.error(
+        `This transfer exceeds your limit of $${parseFloat(transferLimit).toLocaleString(undefined, { minimumFractionDigits: 2 })} per transaction. Please enter a smaller amount.`
+      );
       return;
     }
     if (parseFloat(amount) > parseFloat(fromValue)) {
@@ -186,6 +196,15 @@ export default function TransferPage() {
           <ArrowDownUp className="w-4 h-4 text-gray-600 dark:text-gray-300" />
         </button>
       </div>
+
+      {/* Transfer limit — only shown when the account has one enabled */}
+      {transferLimitEnabled && (
+        <div className="flex justify-center relative z-10 mt-1 mb-1">
+          <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400 bg-white dark:bg-[#1a2332] px-2.5 py-1 rounded-full border border-gray-200 dark:border-white/10">
+            Limit: ${parseFloat(transferLimit).toLocaleString(undefined, { minimumFractionDigits: 2 })} per transfer
+          </span>
+        </div>
+      )}
 
       {/* To */}
       <div className="mt-1 mb-6">

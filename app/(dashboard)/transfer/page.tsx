@@ -27,6 +27,7 @@ export default function TransferPage() {
   const [currency, setCurrency] = useState("USD");
   const [transferLimitEnabled, setTransferLimitEnabled] = useState(false);
   const [transferLimit, setTransferLimit] = useState("500.00");
+  const [remainingToday, setRemainingToday] = useState<string | null>(null);
   const [direction, setDirection] = useState<Direction>("balance_to_profit");
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(true);
@@ -77,6 +78,9 @@ export default function TransferPage() {
         setCurrency(data.currency || "USD");
         setTransferLimitEnabled(data.transfer_limit_enabled || false);
         setTransferLimit(data.transfer_limit || "500.00");
+        setRemainingToday(
+          data.transfer_limit_remaining_today != null ? data.transfer_limit_remaining_today : null
+        );
       } else {
         console.error("Transfer info error:", res.status, data);
         toast.error(data?.detail || data?.error || "Failed to load transfer info");
@@ -109,9 +113,9 @@ export default function TransferPage() {
       toast.error("Please enter a valid amount");
       return;
     }
-    if (transferLimitEnabled && parseFloat(amount) > parseFloat(transferLimit)) {
+    if (transferLimitEnabled && remainingToday !== null && parseFloat(amount) > parseFloat(remainingToday)) {
       toast.error(
-        `This transfer exceeds your limit of $${parseFloat(transferLimit).toLocaleString(undefined, { minimumFractionDigits: 2 })} per transaction. Please enter a smaller amount.`
+        `This transfer exceeds your daily transfer limit of $${parseFloat(transferLimit).toLocaleString(undefined, { minimumFractionDigits: 2 })}. You have $${parseFloat(remainingToday).toLocaleString(undefined, { minimumFractionDigits: 2 })} remaining today.`
       );
       return;
     }
@@ -133,6 +137,10 @@ export default function TransferPage() {
         setBalance(data.balance);
         setProfit(data.profit);
         setAmount("");
+        if (transferLimitEnabled && remainingToday !== null) {
+          const newRemaining = Math.max(0, parseFloat(remainingToday) - parseFloat(amount));
+          setRemainingToday(newRemaining.toFixed(2));
+        }
         fetchHistory();
       } else {
         toast.error(data.error || "Transfer failed");
@@ -201,7 +209,10 @@ export default function TransferPage() {
       {transferLimitEnabled && (
         <div className="flex justify-center relative z-10 mt-1 mb-1">
           <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400 bg-white dark:bg-[#1a2332] px-2.5 py-1 rounded-full border border-gray-200 dark:border-white/10">
-            Limit: ${parseFloat(transferLimit).toLocaleString(undefined, { minimumFractionDigits: 2 })} per transfer
+            Daily limit: ${parseFloat(transferLimit).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            {remainingToday !== null && (
+              <> &middot; ${parseFloat(remainingToday).toLocaleString(undefined, { minimumFractionDigits: 2 })} left today</>
+            )}
           </span>
         </div>
       )}

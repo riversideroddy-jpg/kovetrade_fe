@@ -72,11 +72,114 @@ const CryptoIcons: Record<string, React.ReactNode> = {
       />
     </svg>
   ),
+  LTC: (
+    <svg className="w-7 h-7 sm:w-8 sm:h-8" viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="16" fill="#345D9D" />
+      <path
+        d="M13.7 18.6l-1.4.55-.7-.9 1.4-.56 1.9-6.85h3l-1.5 5.4 1.4-.55.4 1-1.42.55-.55 2h6.7L21.3 22H10l.9-3.2-1.4.55-.4-1 1.4-.55z"
+        fill="white"
+      />
+    </svg>
+  ),
+  DOGE: (
+    <svg className="w-7 h-7 sm:w-8 sm:h-8" viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="16" fill="#C2A633" />
+      <path
+        d="M12 9h4.8c3.6 0 6 2.6 6 7s-2.4 7-6 7H12v-5H9.8v-2.4H12v-1.2H9.8V12H12V9zm2.6 2.6v9.8h2c2.2 0 3.6-1.8 3.6-4.9s-1.4-4.9-3.6-4.9h-2z"
+        fill="white"
+      />
+    </svg>
+  ),
+  ADA: (
+    <svg className="w-7 h-7 sm:w-8 sm:h-8" viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="16" fill="#0033AD" />
+      <g fill="white">
+        <circle cx="16" cy="9" r="1.6" />
+        <circle cx="16" cy="23" r="1.6" />
+        <circle cx="10.5" cy="12" r="1.6" />
+        <circle cx="21.5" cy="12" r="1.6" />
+        <circle cx="10.5" cy="20" r="1.6" />
+        <circle cx="21.5" cy="20" r="1.6" />
+        <circle cx="7" cy="16" r="1.6" />
+        <circle cx="25" cy="16" r="1.6" />
+        <circle cx="16" cy="16" r="2.1" />
+      </g>
+    </svg>
+  ),
+  AVAX: (
+    <svg className="w-7 h-7 sm:w-8 sm:h-8" viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="16" fill="#E84142" />
+      <path d="M19.5 10h-2.9l-5.2 12h3l1.1-2.7h5.3l1 2.7h3l-5.3-12zm-3.1 6.9l1.7-4.3 1.6 4.3h-3.3z" fill="white" />
+    </svg>
+  ),
+  MATIC: (
+    <svg className="w-7 h-7 sm:w-8 sm:h-8" viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="16" fill="#8247E5" />
+      <path
+        d="M20.5 13.2l-3-1.7a1 1 0 0 0-1 0l-3 1.7a1 1 0 0 0-.5.87v3.46a1 1 0 0 0 .5.87l3 1.7a1 1 0 0 0 1 0l3-1.7a1 1 0 0 0 .5-.87v-1.16l-1.5.87v.3l-2 1.13-2-1.13v-2.27l2-1.13 2 1.13v-1.87z"
+        fill="white"
+      />
+    </svg>
+  ),
+  DOT: (
+    <svg className="w-7 h-7 sm:w-8 sm:h-8" viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="16" fill="#E6007A" />
+      <ellipse cx="16" cy="7.5" rx="3.2" ry="2.4" fill="white" />
+      <ellipse cx="16" cy="24.5" rx="3.2" ry="2.4" fill="white" />
+      <ellipse cx="7" cy="16" rx="2.4" ry="3.2" fill="white" />
+      <ellipse cx="25" cy="16" rx="2.4" ry="3.2" fill="white" />
+    </svg>
+  ),
+  ATOM: (
+    <svg className="w-7 h-7 sm:w-8 sm:h-8" viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="16" fill="#2E3148" />
+      <circle cx="16" cy="16" r="2" fill="white" />
+      <ellipse cx="16" cy="16" rx="9" ry="3.4" stroke="white" strokeWidth="1.3" />
+      <ellipse cx="16" cy="16" rx="9" ry="3.4" stroke="white" strokeWidth="1.3" transform="rotate(60 16 16)" />
+      <ellipse cx="16" cy="16" rx="9" ry="3.4" stroke="white" strokeWidth="1.3" transform="rotate(120 16 16)" />
+    </svg>
+  ),
+  DAI: (
+    <svg className="w-7 h-7 sm:w-8 sm:h-8" viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="16" fill="#F5AC37" />
+      <path
+        d="M11 9h5.6c4 0 6.9 2.7 6.9 7s-2.9 7-6.9 7H11v-4.3H9.3v-1.6H11v-2.2H9.3v-1.6H11V9zm2.6 2.4v3.1h4.7v1.6h-4.7v3.1h4.7v1.6h-4.7v.1h3c2.6 0 4.3-1.8 4.3-4.7s-1.7-4.7-4.3-4.7h-3z"
+        fill="white"
+      />
+    </svg>
+  ),
+  LINK: (
+    <svg className="w-7 h-7 sm:w-8 sm:h-8" viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="16" fill="#2A5ADA" />
+      <path
+        d="M16 6.5l3.6 2.1v4.2L23.2 15v6l-3.6 2.2v4.2L16 29.5l-3.6-2.1v-4.2L8.8 21v-6l3.6-2.2V8.6L16 6.5zm0 3.5l-2.4 1.4v2.8l2.4-1.4 2.4 1.4v-2.8L16 10zm-5.2 6l-.8.5v2.9l.8.5v-3.9zm10.4 0v3.9l.8-.5v-2.9l-.8-.5zM13.6 21.5v2.8L16 25.7l2.4-1.4v-2.8L16 22.9l-2.4-1.4z"
+        fill="white"
+      />
+    </svg>
+  ),
+  TON: (
+    <svg className="w-7 h-7 sm:w-8 sm:h-8" viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="16" fill="#0088CC" />
+      <path d="M10 10h12l-6 13-6-13zm2.3 2l3.7 8 3.7-8h-7.4z" fill="white" />
+    </svg>
+  ),
+  GENERIC: (
+    <svg className="w-7 h-7 sm:w-8 sm:h-8" viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="16" fill="#9CA3AF" />
+      <circle cx="16" cy="16" r="9" stroke="white" strokeWidth="2" fill="none" />
+      <text x="16" y="20.5" textAnchor="middle" fill="white" fontSize="11" fontWeight="700">$</text>
+    </svg>
+  ),
 };
 
 export const getCryptoIcon = (currency: string): React.ReactNode => {
   if (currency.includes("USDT")) return CryptoIcons.USDT;
-  return CryptoIcons[currency] || CryptoIcons.BTC;
+  if (currency.includes("USDC")) return CryptoIcons.USDC;
+  // Match the base symbol (e.g. "BTC" out of "BTC (Bitcoin Network)") before
+  // falling back — a currency this doesn't recognise gets a neutral coin
+  // glyph, never another coin's logo (that's what caused USDC to render as
+  // Bitcoin previously: every unmapped key silently fell back to BTC).
+  return CryptoIcons[currency] || CryptoIcons.GENERIC;
 };
 
 export const getNetworkName = (currency: string): string => {
@@ -85,9 +188,24 @@ export const getNetworkName = (currency: string): string => {
   if (currency === "SOL") return "Solana Network";
   if (currency === "USDT ERC20") return "ERC20 Network";
   if (currency === "USDT TRC20") return "TRC20 Network";
+  if (currency === "USDT SOL") return "Solana Network";
+  if (currency === "USDT BEP20") return "BEP20 / BSC Network";
   if (currency === "BNB") return "BSC Network";
   if (currency === "TRX") return "Tron Network";
   if (currency === "USDC") return "BASE Network";
+  if (currency === "USDC ERC20") return "ERC20 Network";
+  if (currency === "USDC SOL") return "Solana Network";
+  if (currency === "USDC TRC20") return "TRC20 Network";
   if (currency === "XRP") return "XRP Ledger";
+  if (currency === "LTC") return "Litecoin Network";
+  if (currency === "DOGE") return "Dogecoin Network";
+  if (currency === "ADA") return "Cardano Network";
+  if (currency === "AVAX") return "Avalanche C-Chain";
+  if (currency === "MATIC") return "Polygon Network";
+  if (currency === "DOT") return "Polkadot Network";
+  if (currency === "ATOM") return "Cosmos Network";
+  if (currency === "DAI") return "ERC20 Network";
+  if (currency === "LINK") return "ERC20 Network";
+  if (currency === "TON") return "TON Network";
   return currency;
 };

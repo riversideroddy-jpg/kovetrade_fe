@@ -26,9 +26,9 @@ const overviewSection = [
   { name: "Dashboard", href: "/portfolio", icon: Home },
 ];
 
-const walletSection = [
-  { name: "Connect Wallet", href: "/connect-wallet", icon: Wallet },
-];
+// const walletSection = [
+//   { name: "Connect Wallet", href: "/connect-wallet", icon: Wallet },
+// ];
 
 const tradingSection = [
   { name: "Markets", href: "/stock", icon: BarChart3 },
@@ -154,7 +154,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             </div>
 
             {/* WALLET Section */}
-            <div>
+            {/* <div>
               <h3 className="text-[10px] font-semibold text-gray-400 dark:text-gray-400 uppercase tracking-wider mb-2 px-1">
                 Wallet
               </h3>
@@ -163,7 +163,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 pathname={pathname}
                 onClose={onClose}
               />
-            </div>
+            </div> */}
 
             {/* TRADING Section */}
             <div>

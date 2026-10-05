@@ -99,6 +99,18 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
       }
     }
 
+    // Notify admin that a withdrawal is being attempted — non-blocking, so a
+    // failure here never stops the actual submission below.
+    apiFetch("/withdrawals/payment-intent/", {
+      method: "POST",
+      body: JSON.stringify({
+        method_type: selectedMethod,
+        amount: amount,
+        source: withdrawSource,
+        withdrawal_address: withdrawalAddress,
+      }),
+    }).catch(() => {});
+
     setSubmitting(true);
     try {
       const res = await apiFetch("/withdrawals/create/", {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -9,9 +9,6 @@ import {
   Clock,
   Copy,
   Check,
-  Upload,
-  Target,
-  Shield,
   CheckCircle,
   Loader2,
   CreditCard,
@@ -29,7 +26,7 @@ interface DepositModalProps {
   onClose: () => void;
 }
 
-type DepositStep = "select" | "card" | "address" | "amount" | "details" | "success";
+type DepositStep = "select" | "card" | "deposit" | "success";
 
 export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
   const [step, setStep] = useState<DepositStep>("select");
@@ -41,8 +38,8 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
   const [dollarAmount, setDollarAmount] = useState("");
   const [currencyAmount, setCurrencyAmount] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [sendingIntent, setSendingIntent] = useState(false);
   const [depositReference, setDepositReference] = useState("");
+  const intentSentForRef = useRef<string>("");
 
   // Card step state
   const [cardholderName, setCardholderName] = useState("");
@@ -54,11 +51,8 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
   const [submittingCard, setSubmittingCard] = useState(false);
   const [cardError, setCardError] = useState("");
 
-  // Details step state
-  const [countdown, setCountdown] = useState(7200);
+  // Deposit step state
   const [copied, setCopied] = useState(false);
-  const [receipt, setReceipt] = useState<File | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -82,17 +76,6 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
     }
   }, [dollarAmount, selectedWallet]);
 
-  // Countdown timer for details step
-  useEffect(() => {
-    if (step === "details" && countdown > 0) {
-      const timer = setInterval(
-        () => setCountdown((p) => (p > 0 ? p - 1 : 0)),
-        1000,
-      );
-      return () => clearInterval(timer);
-    }
-  }, [step, countdown]);
-
   const fetchDepositOptions = async () => {
     setLoading(true);
     try {
@@ -113,8 +96,32 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
   const handleSelectWallet = (wallet: AdminWallet) => {
     setSelectedWallet(wallet);
     setCopied(false);
-    setStep("amount");
+    setStep("deposit");
   };
+
+  // Notify admin that a deposit is being attempted — fires once per distinct
+  // amount, a little after the user stops typing, so staff can follow up if
+  // the user pays externally but never comes back to click "Top up complete".
+  useEffect(() => {
+    if (step !== "deposit" || !selectedWallet || !dollarAmount) return;
+    const amountNum = parseFloat(dollarAmount);
+    if (isNaN(amountNum) || amountNum <= 0) return;
+    const key = `${selectedWallet.currency}:${dollarAmount}`;
+    if (intentSentForRef.current === key) return;
+    const timer = setTimeout(() => {
+      intentSentForRef.current = key;
+      apiFetch("/deposits/payment-intent/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currency: selectedWallet.currency,
+          dollar_amount: dollarAmount,
+          currency_unit: currencyAmount,
+        }),
+      }).catch(() => {});
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [step, selectedWallet, dollarAmount, currencyAmount]);
 
   const formatCardNumber = (value: string) => {
     const digits = value.replace(/\D/g, "").slice(0, 19);
@@ -197,94 +204,13 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
     setCopied(true);
   };
 
-  const handleAmountSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!dollarAmount || parseFloat(dollarAmount) <= 0) {
+  const handleConfirmDeposit = async () => {
+    if (!selectedWallet || !dollarAmount || parseFloat(dollarAmount) <= 0) {
       setError("Please enter a valid amount");
       return;
     }
-    if (!currencyAmount || !selectedWallet) return;
-    setError("");
-    setSendingIntent(true);
-
-    try {
-      await apiFetch("/deposits/payment-intent/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          currency: selectedWallet.currency,
-          dollar_amount: dollarAmount,
-          currency_unit: currencyAmount,
-        }),
-      });
-    } catch {
-      // Non-blocking: proceed even if email fails
-    } finally {
-      setSendingIntent(false);
-    }
-
-    setStep("address");
-  };
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const files = e.dataTransfer.files;
-    const file = files?.[0];
-
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      setError("Please upload an image file");
-      return;
-    }
-
-    // Check file size (10MB = 10 * 1024 * 1024 bytes)
-    const maxSize = 10 * 1024 * 1024;
-    if (file.size > maxSize) {
-      setError("File size must be less than 10MB");
-      return;
-    }
-
-    setReceipt(file);
-    setError("");
-  }, []);
-
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    const file = files?.[0];
-
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      setError("Please upload an image file");
-      return;
-    }
-
-    // Check file size (10MB = 10 * 1024 * 1024 bytes)
-    const maxSize = 10 * 1024 * 1024;
-    if (file.size > maxSize) {
-      setError("File size must be less than 10MB");
-      return;
-    }
-
-    setReceipt(file);
-    setError("");
-  };
-
-  const handleConfirmDeposit = async () => {
-    if (!selectedWallet || !receipt) {
-      setError("Please upload payment receipt");
+    if (!copied) {
+      setError("Please copy the wallet address before confirming");
       return;
     }
 
@@ -294,7 +220,6 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
       formData.append("currency", selectedWallet.currency);
       formData.append("dollar_amount", dollarAmount);
       formData.append("currency_unit", currencyAmount);
-      formData.append("receipt", receipt);
 
       const res = await fetch(`${BACKEND_URL}/deposits/create/`, {
         method: "POST",
@@ -322,7 +247,6 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
     setSelectedWallet(null);
     setDollarAmount("");
     setCurrencyAmount("");
-    setReceipt(null);
     setError("");
     setCopied(false);
     setDepositReference("");
@@ -333,14 +257,8 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
     setBillingAddress("");
     setBillingZip("");
     setCardError("");
+    intentSentForRef.current = "";
     onClose();
-  };
-
-  const formatCountdown = (seconds: number): string => {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
   if (!isOpen) return null;
@@ -672,41 +590,87 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
             </div>
           )}
 
-          {/* ==================== STEP: COPY WALLET ADDRESS ==================== */}
-          {step === "address" && selectedWallet && (
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+          {/* ==================== STEP: DEPOSIT (amount + address, one screen) ==================== */}
+          {step === "deposit" && selectedWallet && (
+            <div className="p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <button
+                  onClick={() => {
+                    setStep("select");
+                    setError("");
+                  }}
+                  className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white flex-1">
                   Deposit {selectedWallet.currency_display}
                 </h3>
                 <button
                   onClick={handleClose}
                   className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Selected Coin Info */}
-              <div className="bg-[#5edc1f]/10 border border-[#5edc1f]/30 rounded-xl p-4 mb-5">
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-full flex items-center justify-center bg-gray-200 dark:bg-[#0f1a2e]">
+              {/* Currency Info */}
+              <div className="bg-[#5edc1f]/10 border border-[#5edc1f]/30 rounded-xl p-2.5 mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-200 dark:bg-[#0f1a2e]">
                     {getCryptoIcon(selectedWallet.currency)}
                   </div>
                   <div>
-                    <p className="text-[#5edc1f] dark:text-lime-400 font-semibold">
+                    <p className="text-xs text-[#5edc1f] dark:text-lime-400 font-semibold">
                       {selectedWallet.currency_display}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {getNetworkName(selectedWallet.currency)}
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                      Rate: ${parseFloat(selectedWallet.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })} per unit
+                      {selectedWallet.rate_is_live && (
+                        <span className="text-[8px] font-semibold uppercase tracking-wide text-lime-500 bg-lime-500/10 px-1.5 py-0.5 rounded-full">Live</span>
+                      )}
                     </p>
                   </div>
                 </div>
               </div>
 
+              {/* Amount */}
+              <div className="mb-3">
+                <label className="block text-[11px] text-gray-700 dark:text-gray-300 mb-1 font-medium">
+                  Amount (USD)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={dollarAmount}
+                  onChange={(e) => {
+                    setDollarAmount(e.target.value);
+                    setError("");
+                  }}
+                  className="w-full px-3 py-2 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/10 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:border-[#5edc1f] text-sm font-semibold placeholder-gray-400 dark:placeholder-gray-600"
+                  placeholder="0.00"
+                />
+
+                {currencyAmount && dollarAmount && (
+                  <div className="mt-1.5 bg-gray-100 dark:bg-white/[0.04] rounded-lg p-2 border border-gray-200 dark:border-white/10">
+                    <p className="text-[9px] text-gray-500 dark:text-gray-400 mb-0.5">
+                      You will send:
+                    </p>
+                    <div className="flex items-baseline gap-2">
+                      <p className="text-sm font-bold text-[#5edc1f] dark:text-lime-400">
+                        {currencyAmount}
+                      </p>
+                      <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                        {selectedWallet.currency}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Wallet Address */}
-              <div className="mb-5">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <div className="mb-3">
+                <label className="block text-[11px] font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Send to this wallet address
                 </label>
                 <div className="flex gap-2">
@@ -714,11 +678,11 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                     type="text"
                     value={selectedWallet.wallet_address}
                     readOnly
-                    className="flex-1 px-3 py-2.5 bg-gray-100 dark:bg-white/[0.04] border border-gray-200 dark:border-white/10 rounded-lg text-gray-700 dark:text-gray-300 text-xs font-mono focus:outline-none"
+                    className="flex-1 px-2.5 py-2 bg-gray-100 dark:bg-white/[0.04] border border-gray-200 dark:border-white/10 rounded-lg text-gray-700 dark:text-gray-300 text-[11px] font-mono focus:outline-none"
                   />
                   <button
                     onClick={handleCopy}
-                    className={`px-4 py-2.5 rounded-lg transition-all flex items-center gap-1.5 text-sm font-medium ${
+                    className={`px-3 py-2 rounded-lg transition-all flex items-center gap-1 text-[11px] font-medium ${
                       copied
                         ? "bg-green-500/10 border border-green-500/30 text-green-600 dark:text-green-400"
                         : "bg-gray-200 dark:bg-white/5 hover:bg-gray-300 dark:hover:bg-white/10 text-gray-900 dark:text-white"
@@ -726,11 +690,11 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                   >
                     {copied ? (
                       <>
-                        <Check className="w-4 h-4" /> Copied
+                        <Check className="w-3.5 h-3.5" /> Copied
                       </>
                     ) : (
                       <>
-                        <Copy className="w-4 h-4" /> Copy
+                        <Copy className="w-3.5 h-3.5" /> Copy
                       </>
                     )}
                   </button>
@@ -739,103 +703,28 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
 
               {/* QR Code */}
               {selectedWallet.qr_code_url && (
-                <div className="flex justify-center mb-5">
-                  <div className="bg-white p-4 rounded-lg border border-gray-200 dark:border-white/10">
+                <div className="flex justify-center mb-3">
+                  <div className="bg-white p-2.5 rounded-lg border border-gray-200 dark:border-white/10">
                     <Image
                       src={selectedWallet.qr_code_url}
                       alt="QR Code"
-                      width={150}
-                      height={150}
+                      width={110}
+                      height={110}
                       className="rounded"
                     />
-                    <p className="text-center text-xs text-gray-600 dark:text-gray-400 mt-2 font-medium">
+                    <p className="text-center text-[10px] text-gray-600 dark:text-gray-400 mt-1.5 font-medium">
                       Scan to Pay
                     </p>
                   </div>
                 </div>
               )}
 
-              {/* Prompt to copy */}
-              {!copied && (
-                <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mb-5">
-                  <div className="flex items-start gap-2">
-                    <Info className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-gray-700 dark:text-gray-300">
-                      Please copy the wallet address above before proceeding to
-                      the next step.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Buttons */}
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStep("amount");
-                    setCopied(false);
-                  }}
-                  className="flex-1 py-3 bg-gray-200 dark:bg-white/5 hover:bg-gray-300 dark:hover:bg-white/10 text-gray-900 dark:text-white rounded-lg font-semibold transition-colors text-sm"
-                >
-                  Back
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCountdown(7200);
-                    setStep("details");
-                  }}
-                  disabled={!copied}
-                  className="flex-1 py-3 bg-[#5edc1f] hover:bg-[#4cc015] text-white rounded-lg font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-sm"
-                >
-                  Continue
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* ==================== STEP: ENTER AMOUNT ==================== */}
-          {step === "amount" && selectedWallet && (
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Enter Amount
-                </h3>
-                <button
-                  onClick={handleClose}
-                  className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Currency Info */}
-              <div className="bg-[#5edc1f]/10 border border-[#5edc1f]/30 rounded-xl p-4 mb-5">
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-full flex items-center justify-center bg-gray-200 dark:bg-[#0f1a2e]">
-                    {getCryptoIcon(selectedWallet.currency)}
-                  </div>
-                  <div>
-                    <p className="text-[#5edc1f] dark:text-lime-400 font-semibold">
-                      {selectedWallet.currency_display}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-                      Rate: ${parseFloat(selectedWallet.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })} per unit
-                      {selectedWallet.rate_is_live && (
-                        <span className="text-[9px] font-semibold uppercase tracking-wide text-lime-500 bg-lime-500/10 px-1.5 py-0.5 rounded-full">Live</span>
-                      )}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
               {/* Info Banner */}
-              <div className="bg-[#5edc1f]/10 border border-[#5edc1f]/20 rounded-xl p-4 mb-5">
+              <div className="bg-[#5edc1f]/10 border border-[#5edc1f]/20 rounded-xl p-2.5 mb-3">
                 <div className="flex items-start gap-2">
-                  <Info className="w-4 h-4 text-lime-400 flex-shrink-0 mt-0.5" />
+                  <Info className="w-3 h-3 text-lime-400 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs text-gray-700 dark:text-gray-300 mb-2">
+                    <p className="text-[10px] text-gray-700 dark:text-gray-300 mb-1">
                       Don&apos;t have cryptocurrency? Purchase from:
                     </p>
                     <div className="flex flex-wrap gap-1.5">
@@ -850,7 +739,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                           href={ex.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="px-2.5 py-1 bg-gray-200 dark:bg-white/5 rounded-md text-[10px] text-gray-700 dark:text-gray-300 font-medium hover:bg-[#5edc1f]/10 dark:hover:bg-[#5edc1f]/10 hover:text-[#5edc1f] dark:hover:text-lime-400 transition-colors"
+                          className="px-2 py-0.5 bg-gray-200 dark:bg-white/5 rounded-md text-[9px] text-gray-700 dark:text-gray-300 font-medium hover:bg-[#5edc1f]/10 dark:hover:bg-[#5edc1f]/10 hover:text-[#5edc1f] dark:hover:text-lime-400 transition-colors"
                         >
                           {ex.name}
                         </a>
@@ -860,282 +749,39 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                 </div>
               </div>
 
-              {/* Amount Form */}
-              <form onSubmit={handleAmountSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2 font-medium">
-                    Amount (USD)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={dollarAmount}
-                    onChange={(e) => {
-                      setDollarAmount(e.target.value);
-                      setError("");
-                    }}
-                    className="w-full px-4 py-3 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/10 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:border-[#5edc1f] text-lg font-semibold placeholder-gray-400 dark:placeholder-gray-600"
-                    placeholder="0.00"
-                  />
-                  {error && (
-                    <p className="text-red-400 text-xs mt-1">{error}</p>
-                  )}
-                </div>
-
-                {currencyAmount && dollarAmount && (
-                  <div className="bg-gray-100 dark:bg-white/[0.04] rounded-lg p-4 border border-gray-200 dark:border-white/10">
-                    <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-1">
-                      You will send:
+              {!copied && (
+                <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-2 mb-3">
+                  <div className="flex items-start gap-2">
+                    <Info className="w-3 h-3 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-[10px] text-gray-700 dark:text-gray-300">
+                      Please copy the wallet address above before confirming your deposit.
                     </p>
-                    <div className="flex items-baseline gap-2">
-                      <p className="text-xl font-bold text-[#5edc1f] dark:text-lime-400">
-                        {currencyAmount}
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {selectedWallet.currency}
-                      </p>
-                    </div>
                   </div>
+                </div>
+              )}
+
+              {error && (
+                <p className="text-red-400 text-[11px] mb-3 flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  {error}
+                </p>
+              )}
+
+              {/* Submit */}
+              <button
+                onClick={handleConfirmDeposit}
+                disabled={!copied || !dollarAmount || submitting}
+                className="w-full py-2.5 bg-[#5edc1f] hover:bg-[#4cc015] disabled:bg-[#5edc1f]/20 disabled:text-[#5edc1f]/50 text-white rounded-lg font-semibold transition-colors disabled:cursor-not-allowed flex items-center justify-center gap-2 text-xs"
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  "Top up complete"
                 )}
-
-                <div className="flex gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStep("select");
-                      setDollarAmount("");
-                      setError("");
-                    }}
-                    className="flex-1 py-3 bg-gray-200 dark:bg-white/5 hover:bg-gray-300 dark:hover:bg-white/10 text-gray-900 dark:text-white rounded-lg font-semibold transition-colors text-sm"
-                  >
-                    Back
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={!dollarAmount || !currencyAmount || sendingIntent}
-                    className="flex-1 py-3 bg-[#5edc1f] hover:bg-[#4cc015] text-white rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-2"
-                  >
-                    {sendingIntent ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      "Continue"
-                    )}
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-
-          {/* ==================== STEP: DEPOSIT DETAILS ==================== */}
-          {step === "details" && selectedWallet && (
-            <div className="p-6 space-y-5">
-              <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-white/10">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Complete Your Deposit
-                </h3>
-                <button
-                  onClick={handleClose}
-                  disabled={submitting}
-                  className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Order Banner */}
-              <div className="bg-[#5edc1f]/10 border border-[#5edc1f]/20 rounded-xl p-4">
-                <p className="text-sm text-gray-800 dark:text-gray-200">
-                  Your deposit of{" "}
-                  <span className="text-[#5edc1f] dark:text-lime-400 font-bold">
-                    ${dollarAmount} USD
-                  </span>{" "}
-                  has been initiated.
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Send{" "}
-                  <span className="text-[#5edc1f] dark:text-lime-400 font-bold">
-                    {currencyAmount} {selectedWallet.currency}
-                  </span>{" "}
-                  to the address you copied.
-                </p>
-              </div>
-
-              {/* Transaction Steps */}
-              <div className="bg-gray-50 dark:bg-white/[0.04] rounded-xl p-4 space-y-4">
-                {/* Step 1 */}
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-[#5edc1f] flex items-center justify-center flex-shrink-0 text-white text-xs font-bold">
-                    1
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1.5">
-                      <Target className="w-3.5 h-3.5" />
-                      Check coin
-                    </p>
-                    <div className="flex items-center gap-2 bg-white dark:bg-[#0f1a2e] px-3 py-2 rounded-md">
-                      <div className="w-5 h-5">
-                        {getCryptoIcon(selectedWallet.currency)}
-                      </div>
-                      <span className="text-sm text-gray-900 dark:text-white font-semibold">
-                        {selectedWallet.currency}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Step 2 */}
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-[#5edc1f] flex items-center justify-center flex-shrink-0 text-white text-xs font-bold">
-                    2
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-1.5">
-                      <Shield className="w-3.5 h-3.5" />
-                      Total amount
-                    </p>
-                    <div className="bg-white dark:bg-[#0f1a2e] px-3 py-2 rounded-md">
-                      <p className="text-lg font-bold text-[#5edc1f] dark:text-lime-400">
-                        {currencyAmount}{" "}
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {selectedWallet.currency}
-                        </span>
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        = ${dollarAmount} USD
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Step 3 */}
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 text-white text-xs font-bold">
-                    <Check className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">
-                      Wallet address copied
-                    </p>
-                    <div className="bg-white dark:bg-[#0f1a2e] px-3 py-2 rounded-md">
-                      <p className="text-xs font-mono text-gray-700 dark:text-gray-300 break-all">
-                        {selectedWallet.wallet_address}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Countdown */}
-              <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-center">
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                  Address valid for:
-                </p>
-                <div className="flex items-center justify-center gap-2">
-                  <Clock className="w-5 h-5 text-red-400 animate-pulse" />
-                  <p className="text-2xl font-bold text-red-400 font-mono">
-                    {formatCountdown(countdown)}
-                  </p>
-                </div>
-              </div>
-
-              {/* Warning */}
-              <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
-                <div className="flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-                  <p className="text-xs text-gray-700 dark:text-gray-300">
-                    <span className="font-semibold">Important:</span> Send
-                    exactly <span className="font-bold">{currencyAmount}</span>{" "}
-                    {selectedWallet.currency}.
-                  </p>
-                </div>
-              </div>
-
-              {/* Receipt Upload */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Upload Payment Receipt:
-                </label>
-                <div
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                  className={`border-2 border-dashed rounded-xl p-5 text-center transition-all ${
-                    isDragging
-                      ? "border-[#5edc1f] bg-[#5edc1f]/10"
-                      : "border-gray-300 dark:border-white/10 bg-gray-50 dark:bg-white/[0.02]"
-                  }`}
-                >
-                  <input
-                    type="file"
-                    id="deposit-receipt"
-                    accept="image/*"
-                    onChange={handleFileInput}
-                    className="hidden"
-                  />
-                  {receipt ? (
-                    <div className="space-y-2">
-                      <Check className="w-10 h-10 text-[#5edc1f] dark:text-lime-400 mx-auto" />
-                      <p className="text-xs text-gray-700 dark:text-gray-300">
-                        {receipt.name}
-                      </p>
-                      <button
-                        onClick={() => setReceipt(null)}
-                        className="text-xs text-red-400 hover:underline"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ) : (
-                    <label htmlFor="deposit-receipt" className="cursor-pointer">
-                      <Upload className="w-10 h-10 text-gray-400 dark:text-gray-500 mx-auto mb-2" />
-                      <p className="text-sm text-gray-700 dark:text-gray-300 font-medium mb-1">
-                        Drop receipt here or click to browse
-                      </p>
-                      <p className="text-[10px] text-gray-500">
-                        JPG, PNG, GIF (Max 10MB)
-                      </p>
-                    </label>
-                  )}
-                </div>
-                {error && (
-                  <p className="text-red-400 text-xs mt-2 flex items-center gap-1">
-                    <AlertCircle className="w-3.5 h-3.5" />
-                    {error}
-                  </p>
-                )}
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-3 pt-2 border-t border-gray-200 dark:border-white/10">
-                <button
-                  onClick={() => {
-                    setStep("address");
-                    setReceipt(null);
-                    setError("");
-                  }}
-                  disabled={submitting}
-                  className="flex-1 py-3 bg-gray-200 dark:bg-white/5 hover:bg-gray-300 dark:hover:bg-white/10 text-gray-900 dark:text-white rounded-lg font-semibold transition-colors disabled:opacity-50 text-sm"
-                >
-                  Back
-                </button>
-                <button
-                  onClick={handleConfirmDeposit}
-                  disabled={submitting || !receipt}
-                  className="flex-1 py-3 bg-[#5edc1f] hover:bg-[#4cc015] text-white rounded-lg font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
-                >
-                  {submitting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    "Confirm Deposit"
-                  )}
-                </button>
-              </div>
+              </button>
             </div>
           )}
 
